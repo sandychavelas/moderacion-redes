@@ -1,0 +1,26 @@
+# --- Secretos y entorno local ---
+.env
+.env.*
+!.env.example
+
+# --- Python / API ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+.venv/
+
+# --- OS y editores ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.vscode/*
+!.vscode/extensions.json
