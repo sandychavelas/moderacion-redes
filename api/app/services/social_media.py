@@ -93,11 +93,43 @@ class SocialMediaConnector:
                     return posts_procesados[:limit]
                 else:
                     logger.warning(
-                        f"La API de Reddit respondió con código {response.status_code}. Usando fallback."
+                        f"La API de Reddit respondió con código {response.status_code}. Intentando Hacker News..."
                     )
         except Exception as e:
-            logger.error(f"Error al conectar con la API de Reddit: {str(e)}. Usando fallback.")
+            logger.error(f"Error al conectar con la API de Reddit: {str(e)}. Intentando Hacker News...")
 
-        # Fallback a datos mockeados realistas
+        # Fallback 1: Intentar Hacker News (API 100% pública que no bloquea ni requiere API Key)
+        try:
+            logger.info("Intentando conectar con la API de Hacker News como alternativa real...")
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                hn_res = await client.get("https://hacker-news.firebaseio.com/v0/topstories.json")
+                if hn_res.status_code == 200:
+                    story_ids = hn_res.json()[:limit]
+                    posts_procesados = []
+                    for s_id in story_ids:
+                        item_res = await client.get(f"https://hacker-news.firebaseio.com/v0/item/{s_id}.json")
+                        if item_res.status_code == 200:
+                            item = item_res.json()
+                            titulo = item.get("title", "")
+                            texto = item.get("text", "")
+                            texto_completo = f"{titulo}. {texto}" if texto else titulo
+                            
+                            created_time = item.get("time")
+                            fecha = datetime.fromtimestamp(created_time).isoformat() + "Z" if created_time else datetime.now().isoformat() + "Z"
+                            
+                            posts_procesados.append({
+                                "id_externo": f"hn_{item.get('id')}",
+                                "texto": texto_completo.strip(),
+                                "autor": item.get("by", "desconocido"),
+                                "fecha_creacion": fecha,
+                                "red_social": "HackerNews"
+                            })
+                    if posts_procesados:
+                        logger.info(f"Se extrajeron {len(posts_procesados)} posts reales de Hacker News.")
+                        return posts_procesados
+        except Exception as hn_err:
+            logger.error(f"Error al conectar con la API de Hacker News: {str(hn_err)}. Usando mock fallback.")
+
+        # Fallback 2: Cargar datos locales simulados (en caso de que falle todo lo anterior o no haya internet)
         logger.info(f"Cargando {min(limit, len(MOCK_POSTS))} posts del simulador de tendencias.")
         return MOCK_POSTS[:limit]
