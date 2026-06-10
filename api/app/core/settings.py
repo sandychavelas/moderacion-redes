@@ -46,5 +46,9 @@ class Settings:
     DB_POOL_SIZE: int = _obtener_int_env("DB_POOL_SIZE", 5)
     DB_CONNECTION_TIMEOUT: int = _obtener_int_env("DB_CONNECTION_TIMEOUT", 10)
 
+    # Configuración de DeepSeek
+    DEEPSEEK_API_KEY: str = os.getenv("DEEPSEEK_API_KEY", "")
+    DEEPSEEK_API_BASE: str = os.getenv("DEEPSEEK_API_BASE", "https://api.deepseek.com/v1")
+
 
 settings = Settings()

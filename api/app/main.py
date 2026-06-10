@@ -17,6 +17,7 @@ from app.handlers.handlers import register_exception_handlers
 from app.handlers.rate_limit_exceeded_handler import limiter
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers.posts import router as posts_router
+from app.routers.moderation import router as moderation_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -77,6 +78,7 @@ def configure_cors(app: FastAPI) -> None:
 def include_routers(app: FastAPI) -> None:
     """Incluye todos los routers de la app bajo `API_V1_PREFIX`."""
     app.include_router(posts_router, prefix=settings.API_V1_PREFIX)
+    app.include_router(moderation_router, prefix=settings.API_V1_PREFIX)
 
 
 app = create_app()
