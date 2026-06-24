@@ -172,3 +172,124 @@ async def guardar_historial_moderacion(
     except Exception as e:
         logger.error(f"Error al guardar historial de moderación para post id={post_id}: {str(e)}")
         raise e
+
+
+async def obtener_metricas_analisis(conexion: asyncmy.Connection) -> dict:
+    """
+    Retorna métricas agregadas sobre posts y tendencias para el Dashboard.
+    """
+    metricas = {
+        "total_posts": 0,
+        "por_estado": {"Pendiente": 0, "Aprobado": 0, "Malo": 0},
+        "por_red_social": {},
+        "top_tendencias": []
+    }
+    try:
+        async with conexion.cursor() as cursor:
+            # 1. Total posts
+            await cursor.execute("SELECT COUNT(*) FROM posts")
+            res_total = await cursor.fetchone()
+            metricas["total_posts"] = res_total[0] if res_total else 0
+            
+            # 2. Por estado
+            await cursor.execute("SELECT estado_moderacion, COUNT(*) FROM posts GROUP BY estado_moderacion")
+            res_estados = await cursor.fetchall()
+            for estado, count in res_estados:
+                metricas["por_estado"][estado] = count
+                
+            # 3. Por red social
+            await cursor.execute("SELECT red_social, COUNT(*) FROM posts GROUP BY red_social")
+            res_redes = await cursor.fetchall()
+            for red, count in res_redes:
+                metricas["por_red_social"][red] = count
+
+            # 4. Top tendencias
+            await cursor.execute("""
+                SELECT categoria_tendencia, COUNT(*) as cantidad 
+                FROM posts 
+                WHERE estado_moderacion = 'Aprobado' AND categoria_tendencia IS NOT NULL 
+                GROUP BY categoria_tendencia 
+                ORDER BY cantidad DESC 
+                LIMIT 5
+            """)
+            res_tendencias = await cursor.fetchall()
+            metricas["top_tendencias"] = [
+                {"categoria": cat, "cantidad": cant} for cat, cant in res_tendencias
+            ]
+            
+            return metricas
+    except Exception as e:
+        logger.error(f"Error al obtener métricas de análisis: {str(e)}")
+        raise e
+
+
+async def obtener_posts_pendientes(conexion: asyncmy.Connection, limit: int = 50) -> list[dict]:
+    """
+    Retorna la lista de posts en estado 'Pendiente' listos para moderarse.
+    """
+    sql = """
+        SELECT id, id_externo, texto, autor, fecha_creacion, red_social, estado_moderacion 
+        FROM posts 
+        WHERE estado_moderacion = 'Pendiente' 
+        ORDER BY fecha_creacion DESC 
+        LIMIT %s
+    """
+    try:
+        async with conexion.cursor(cursor=asyncmy.cursors.DictCursor) as cursor:
+            await cursor.execute(sql, [limit])
+            resultados = await cursor.fetchall()
+            for r in resultados:
+                if isinstance(r.get("fecha_creacion"), datetime):
+                    r["fecha_creacion"] = r["fecha_creacion"].isoformat() + "Z"
+            return resultados
+    except Exception as e:
+        logger.error(f"Error al obtener posts pendientes: {str(e)}")
+        raise e
+
+
+async def guardar_tendencia_dia(
+    conexion: asyncmy.Connection,
+    titulo: str,
+    resumen: str,
+    enfoque_comercial: str,
+    palabras_clave: list[str]
+) -> int:
+    """
+    Guarda un resumen de tendencia en la tabla tendencias_dia.
+    """
+    sql = """
+        INSERT INTO tendencias_dia (titulo, resumen, enfoque_comercial, palabras_clave)
+        VALUES (%s, %s, %s, %s)
+    """
+    palabras_clave_str = ",".join(palabras_clave)
+    try:
+        async with conexion.cursor() as cursor:
+            await cursor.execute(sql, [titulo, resumen, enfoque_comercial, palabras_clave_str])
+            return cursor.lastrowid
+    except Exception as e:
+        logger.error(f"Error al guardar tendencia del día: {str(e)}")
+        raise e
+
+
+async def obtener_tendencias_dia(conexion: asyncmy.Connection, limit: int = 10) -> list[dict]:
+    """
+    Obtiene los resúmenes de tendencias del día guardados históricamente.
+    """
+    sql = "SELECT id, titulo, resumen, enfoque_comercial, palabras_clave, fecha_registro FROM tendencias_dia ORDER BY fecha_registro DESC LIMIT %s"
+    try:
+        async with conexion.cursor(cursor=asyncmy.cursors.DictCursor) as cursor:
+            await cursor.execute(sql, [limit])
+            resultados = await cursor.fetchall()
+            for r in resultados:
+                if isinstance(r.get("fecha_registro"), datetime):
+                    r["fecha_registro"] = r["fecha_registro"].isoformat() + "Z"
+                # Volver a parsear las palabras clave a lista
+                if r.get("palabras_clave"):
+                    r["palabras_clave"] = [p.strip() for p in r["palabras_clave"].split(",") if p.strip()]
+                else:
+                    r["palabras_clave"] = []
+            return resultados
+    except Exception as e:
+        logger.error(f"Error al obtener tendencias históricas: {str(e)}")
+        raise e
+
