@@ -1,5 +1,6 @@
 import logging
 import httpx
+import random
 from datetime import datetime
 
 logger = logging.getLogger("app")
@@ -101,8 +102,18 @@ class SocialMediaConnector:
         # Fallback 1: Intentar Dev.to (Artículos tech frescos y muy descriptivos)
         try:
             logger.info("Intentando conectar con la API de Dev.to para artículos tech frescos...")
+            # Paginación y categorías aleatorias para evitar duplicados en extracciones rápidas sucesivas
+            random_page = random.randint(1, 15)
+            tags_variados = ["programming", "startup", "productivity", "saas", "ai", "technology", "webdev"]
+            random_tag = random.choice(tags_variados)
+            
             async with httpx.AsyncClient(timeout=5.0) as client:
-                dev_res = await client.get("https://dev.to/api/articles", params={"per_page": limit})
+                params = {
+                    "per_page": limit,
+                    "page": random_page,
+                    "tag": random_tag
+                }
+                dev_res = await client.get("https://dev.to/api/articles", params=params)
                 if dev_res.status_code == 200:
                     articulos = dev_res.json()
                     posts_procesados = []
