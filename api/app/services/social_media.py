@@ -93,12 +93,45 @@ class SocialMediaConnector:
                     return posts_procesados[:limit]
                 else:
                     logger.warning(
-                        f"La API de Reddit respondió con código {response.status_code}. Intentando Hacker News..."
+                        f"La API de Reddit respondió con código {response.status_code}. Intentando Dev.to..."
                     )
         except Exception as e:
-            logger.error(f"Error al conectar con la API de Reddit: {str(e)}. Intentando Hacker News...")
+            logger.error(f"Error al conectar con la API de Reddit: {str(e)}. Intentando Dev.to...")
 
-        # Fallback 1: Intentar Hacker News (API 100% pública que no bloquea ni requiere API Key)
+        # Fallback 1: Intentar Dev.to (Artículos tech frescos y muy descriptivos)
+        try:
+            logger.info("Intentando conectar con la API de Dev.to para artículos tech frescos...")
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                dev_res = await client.get("https://dev.to/api/articles", params={"per_page": limit})
+                if dev_res.status_code == 200:
+                    articulos = dev_res.json()
+                    posts_procesados = []
+                    for art in articulos:
+                        title = art.get("title", "")
+                        description = art.get("description", "")
+                        texto_completo = f"{title}. {description}".strip()
+                        
+                        published_at = art.get("published_at")
+                        fecha = published_at if published_at else datetime.now().isoformat() + "Z"
+                        
+                        posts_procesados.append({
+                            "id_externo": f"devto_{art.get('id')}",
+                            "texto": texto_completo,
+                            "autor": art.get("user", {}).get("username", "desconocido"),
+                            "fecha_creacion": fecha,
+                            "red_social": "Dev.to"
+                        })
+                    if posts_procesados:
+                        logger.info(f"Se extrajeron {len(posts_procesados)} posts reales de Dev.to.")
+                        return posts_procesados[:limit]
+                else:
+                    logger.warning(
+                        f"La API de Dev.to respondió con código {dev_res.status_code}. Intentando Hacker News..."
+                    )
+        except Exception as dev_err:
+            logger.error(f"Error al conectar con la API de Dev.to: {str(dev_err)}. Intentando Hacker News...")
+
+        # Fallback 2: Intentar Hacker News (API 100% pública que no bloquea ni requiere API Key)
         try:
             logger.info("Intentando conectar con la API de Hacker News como alternativa real...")
             async with httpx.AsyncClient(timeout=5.0) as client:
