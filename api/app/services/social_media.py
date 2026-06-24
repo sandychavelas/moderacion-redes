@@ -56,50 +56,10 @@ class SocialMediaConnector:
 
     async def obtener_posts_tendencia(self, limit: int = 5) -> list[dict]:
         """
-        Extrae los posts en tendencia de Reddit de forma asíncrona.
-        En caso de error o límite de tasa de la API, recurre a datos mockeados realistas.
+        Extrae posts en tendencia de Dev.to de forma asíncrona.
+        En caso de error, recurre a Hacker News, y finalmente a datos mockeados locales.
         """
-        url = "https://www.reddit.com/r/technology/hot.json"
-        params = {"limit": limit}
-
-        try:
-            logger.info(f"Intentando conectar con la API de Reddit: {url}")
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.get(url, headers=self.headers, params=params)
-
-                if response.status_code == 200:
-                    datos = response.json()
-                    posts_procesados = []
-
-                    children = datos.get("data", {}).get("children", [])
-                    for child in children:
-                        post_data = child.get("data", {})
-                        # Combinar título y contenido del post
-                        titulo = post_data.get("title", "")
-                        contenido = post_data.get("selftext", "")
-                        texto_completo = f"{titulo}. {contenido}".strip()
-
-                        # Convertir timestamp UTC a ISO formato string
-                        created_utc = post_data.get("created_utc")
-                        fecha = datetime.fromtimestamp(created_utc).isoformat() + "Z" if created_utc else datetime.now().isoformat() + "Z"
-
-                        posts_procesados.append({
-                            "id_externo": f"reddit_{post_data.get('id')}",
-                            "texto": texto_completo,
-                            "autor": post_data.get("author", "desconocido"),
-                            "fecha_creacion": fecha,
-                            "red_social": "Reddit"
-                        })
-                    logger.info(f"Se extrajeron {len(posts_procesados)} posts reales con éxito de Reddit.")
-                    return posts_procesados[:limit]
-                else:
-                    logger.warning(
-                        f"La API de Reddit respondió con código {response.status_code}. Intentando Dev.to..."
-                    )
-        except Exception as e:
-            logger.error(f"Error al conectar con la API de Reddit: {str(e)}. Intentando Dev.to...")
-
-        # Fallback 1: Intentar Dev.to (Artículos tech frescos y muy descriptivos)
+        # Fuente Principal: Dev.to (Artículos tech frescos y muy descriptivos)
         try:
             logger.info("Intentando conectar con la API de Dev.to para artículos tech frescos...")
             # Paginación y categorías aleatorias para evitar duplicados en extracciones rápidas sucesivas
@@ -133,7 +93,7 @@ class SocialMediaConnector:
                             "red_social": "Dev.to"
                         })
                     if posts_procesados:
-                        logger.info(f"Se extrajeron {len(posts_procesados)} posts reales de Dev.to.")
+                        logger.info(f"Se extrajeron {len(posts_procesados)} posts reales de Dev.to con éxito.")
                         return posts_procesados[:limit]
                 else:
                     logger.warning(
@@ -142,7 +102,7 @@ class SocialMediaConnector:
         except Exception as dev_err:
             logger.error(f"Error al conectar con la API de Dev.to: {str(dev_err)}. Intentando Hacker News...")
 
-        # Fallback 2: Intentar Hacker News (API 100% pública que no bloquea ni requiere API Key)
+        # Fallback 1: Intentar Hacker News (API 100% pública que no bloquea ni requiere API Key)
         try:
             logger.info("Intentando conectar con la API de Hacker News como alternativa real...")
             async with httpx.AsyncClient(timeout=5.0) as client:

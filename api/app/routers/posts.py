@@ -110,7 +110,7 @@ async def fetch_posts_raw(
 
 @router.post("/fetch-and-store", response_model=FetchAndStoreResponse, status_code=status.HTTP_201_CREATED)
 async def fetch_and_store_posts(
-    limit: int = Query(default=5, ge=1, le=20, description="Número de posts a extraer y guardar"),
+    limit: int = Query(default=10, ge=1, le=20, description="Número de posts a extraer y guardar"),
     conexion: asyncmy.Connection = Depends(obtener_conexion_bd)
 ):
     """

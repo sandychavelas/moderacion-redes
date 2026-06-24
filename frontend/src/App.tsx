@@ -126,7 +126,7 @@ export default function App() {
   const handleExtractPosts = async () => {
     setExtracting(true);
     try {
-      await api.extraerPostsRedes(5);
+      await api.extraerPostsRedes(10);
       await loadData();
     } catch (e) {
       alert("Error al extraer posts");
@@ -139,7 +139,7 @@ export default function App() {
   const handleModerateBatch = async () => {
     setModerating(true);
     try {
-      await api.moderarLotePendiente(5);
+      await api.moderarLotePendiente(10);
       await loadData();
     } catch (e) {
       alert("Error al moderar lote");

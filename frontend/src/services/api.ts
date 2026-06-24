@@ -407,7 +407,7 @@ export async function listarTendencias(limit: number = 10): Promise<any[]> {
   }
 }
 
-export async function extraerPostsRedes(limit: number = 5): Promise<any> {
+export async function extraerPostsRedes(limit: number = 10): Promise<any> {
   if (demoMode) {
     return new Promise((resolve) => {
       setTimeout(() => {
