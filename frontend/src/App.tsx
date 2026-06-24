@@ -65,6 +65,12 @@ export default function App() {
   const [pendingPosts, setPendingPosts] = useState<any[]>([]);
   const [trends, setTrends] = useState<Trend[]>([]);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
+
+  // Derived state: true pending posts count from database (production) or local pendingPosts (demo)
+  const pendingCount = api.isDemoMode()
+    ? pendingPosts.length
+    : (analytics?.por_estado?.Pendiente ?? pendingPosts.length);
+
   
   // Control States
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -198,9 +204,9 @@ export default function App() {
           <img src={logo} alt="Logo" className="h-9 w-auto object-contain rounded-lg filter drop-shadow-[0_0_8px_rgba(99,102,241,0.5)]" />
           <div>
             <h1 className="font-extrabold text-lg bg-gradient-to-r from-indigo-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent tracking-tight">
-              NEURAL MODERATION
+              MODERACIÓN DE CONTENIDO	
             </h1>
-            <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Business Intelligence & AI</p>
+            <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Inteligencia Artificial & Moderaión de Contenido</p>
           </div>
         </div>
 
@@ -219,9 +225,9 @@ export default function App() {
           >
             <Shield className="w-4 h-4" />
             Moderación Manual
-            {pendingPosts.length > 0 && (
+            {pendingCount > 0 && (
               <span className="bg-rose-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold ml-1 animate-pulse">
-                {pendingPosts.length}
+                {pendingCount}
               </span>
             )}
           </button>
@@ -279,7 +285,7 @@ export default function App() {
           onClick={() => setActiveTab('moderation')}
           className={`flex-none px-4 py-1.5 rounded-lg text-xs font-bold ${activeTab === 'moderation' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}
         >
-          Moderación ({pendingPosts.length})
+          Moderación ({pendingCount})
         </button>
         <button 
           onClick={() => setActiveTab('analytics')}
@@ -554,7 +560,7 @@ export default function App() {
                   </div>
                   <div className="bg-slate-950/50 border border-slate-850 p-3 rounded-xl">
                     <span className="text-[10px] text-slate-500 font-bold block uppercase">Pendientes</span>
-                    <span className="text-xl font-extrabold text-amber-500">{pendingPosts.length}</span>
+                    <span className="text-xl font-extrabold text-amber-500">{pendingCount}</span>
                   </div>
                 </div>
 
@@ -588,11 +594,11 @@ export default function App() {
 
                 <button 
                   onClick={handleModerateBatch}
-                  disabled={moderating || pendingPosts.length === 0}
+                  disabled={moderating || pendingCount === 0}
                   className="w-full py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-md glow-indigo disabled:opacity-50"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${moderating ? 'animate-spin' : ''}`} />
-                  Moderar Lote ({pendingPosts.length})
+                  Moderar Lote ({pendingCount})
                 </button>
                 <button 
                   onClick={handleExtractPosts}
@@ -644,7 +650,7 @@ export default function App() {
                 <h2 className="font-extrabold text-slate-200 text-lg flex items-center gap-2">
                   Moderación Manual
                   <span className="bg-amber-500/10 text-amber-400 text-xs px-2.5 py-0.5 rounded-full font-bold border border-amber-500/20">
-                    {pendingPosts.length} pendientes
+                    {pendingCount} pendientes
                   </span>
                 </h2>
                 <p className="text-xs text-slate-400">Analiza individualmente las publicaciones antes de que se aprueben para el feed general</p>
@@ -652,7 +658,7 @@ export default function App() {
 
               <button 
                 onClick={handleModerateBatch}
-                disabled={moderating || pendingPosts.length === 0}
+                disabled={moderating || pendingCount === 0}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl flex items-center gap-2 transition-all shadow-md disabled:opacity-50"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${moderating ? 'animate-spin' : ''}`} />
@@ -806,10 +812,10 @@ export default function App() {
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs font-semibold">
                         <span className="text-amber-500">Pendientes</span>
-                        <span className="text-slate-400">{pendingPosts.length}</span>
+                        <span className="text-slate-400">{pendingCount}</span>
                       </div>
                       <div className="h-3 w-full bg-slate-950 rounded-full overflow-hidden border border-slate-850">
-                        <div className="h-full bg-amber-500 rounded-full" style={{ width: `${analytics.total_posts > 0 ? (pendingPosts.length / analytics.total_posts) * 100 : 0}%` }}></div>
+                        <div className="h-full bg-amber-500 rounded-full" style={{ width: `${analytics.total_posts > 0 ? (pendingCount / analytics.total_posts) * 100 : 0}%` }}></div>
                       </div>
                     </div>
                   </div>
