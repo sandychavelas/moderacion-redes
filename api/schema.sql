@@ -50,6 +50,16 @@ CREATE TABLE IF NOT EXISTS historial_moderacion (
     CONSTRAINT fk_historial_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- --- TABLA DE TENDENCIAS GENERALES DEL DÍA (AGRUPADAS POR IA) ---
+CREATE TABLE IF NOT EXISTS tendencias_dia (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    titulo VARCHAR(150) NOT NULL,
+    resumen TEXT NOT NULL,
+    enfoque_comercial TEXT NOT NULL,
+    palabras_clave VARCHAR(255) NOT NULL,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- --- INSERTAR ALGUNOS DATOS DE PRUEBA INICIALES (MOCK) ---
 INSERT INTO usuarios (nombre, email, rol) VALUES
 ('Emilio PO', 'emilio.po@empresa.com', 'Product Owner'),

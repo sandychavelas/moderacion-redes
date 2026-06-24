@@ -1,3 +1,5 @@
+import logging
+import asyncio
 from fastapi import APIRouter, Query, HTTPException, status, Depends
 from pydantic import BaseModel
 from typing import Optional, List
@@ -6,7 +8,6 @@ from app.services.ai_moderator import AIModeratorService
 from app.dependencies.database import obtener_conexion_bd
 from app.repository import posts_repo as repo
 import asyncmy
-import logging
 
 logger = logging.getLogger("app")
 
@@ -46,6 +47,44 @@ class ModerationResponse(BaseModel):
     categoria_tendencia: str
     justificacion: str
     historial_id: int
+
+
+class TopTendencia(BaseModel):
+    categoria: str
+    cantidad: int
+
+
+class AnalyticsResponse(BaseModel):
+    total_posts: int
+    por_estado: dict
+    por_red_social: dict
+    top_tendencias: List[TopTendencia]
+
+
+class BatchModerationItem(BaseModel):
+    post_id: int
+    texto: str
+    autor: str
+    red_social: str
+    estado_moderacion: str
+    categoria_tendencia: str
+    justificacion: str
+    historial_id: int
+
+
+class BatchModerationResponse(BaseModel):
+    status: str
+    procesados: int
+    moderados: List[BatchModerationItem]
+
+
+class TrendResponse(BaseModel):
+    id: int
+    titulo: str
+    resumen: str
+    enfoque_comercial: str
+    palabras_clave: List[str]
+    fecha_registro: Optional[str] = None
 
 
 # --- ENDPOINTS ---
@@ -146,7 +185,7 @@ async def moderate_stored_post(
                 detail=f"El post con ID {post_id} no fue encontrado en la base de datos."
             )
 
-        # 2. Llamar al moderador de IA DeepSeek
+        # 2. Llama al moderador de IA DeepSeek
         analisis = await ai_moderator.moderar_post(texto=post["texto"])
         clasificacion = analisis.get("clasificacion", "Malo")
         categoria_tendencia = analisis.get("categoria_tendencia", "General")
@@ -184,4 +223,175 @@ async def moderate_stored_post(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error durante el proceso de moderación del post: {str(e)}"
+        )
+
+
+@router.get("/analytics", response_model=AnalyticsResponse, status_code=status.HTTP_200_OK)
+async def get_analytics(
+    conexion: asyncmy.Connection = Depends(obtener_conexion_bd)
+):
+    """
+    Retorna métricas e indicadores estadísticos consolidados para el Dashboard.
+    """
+    try:
+        metricas = await repo.obtener_metricas_analisis(conexion)
+        return metricas
+    except Exception as e:
+        logger.error(f"Error en endpoint GET /posts/analytics: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al calcular métricas de análisis: {str(e)}"
+        )
+
+
+@router.post("/moderate-pending", response_model=BatchModerationResponse, status_code=status.HTTP_200_OK)
+async def moderate_pending_posts(
+    limit: int = Query(default=10, ge=1, le=50, description="Límite de posts a moderar en lote"),
+    conexion: asyncmy.Connection = Depends(obtener_conexion_bd)
+):
+    """
+    Identifica posts en estado 'Pendiente' y los modera de forma concurrente con DeepSeek.
+    """
+    try:
+        # 1. Obtener posts pendientes
+        pendientes = await repo.obtener_posts_pendientes(conexion, limit=limit)
+        if not pendientes:
+            return BatchModerationResponse(
+                status="success",
+                procesados=0,
+                moderados=[]
+            )
+
+        # 2. Moderar concurrentemente
+        tareas = [ai_moderator.moderar_post(post["texto"]) for post in pendientes]
+        resultados_ia = await asyncio.gather(*tareas)
+
+        # 3. Guardar cambios en BD e historial secuencialmente
+        moderados = []
+        for post, analisis in zip(pendientes, resultados_ia):
+            post_id = post["id"]
+            clasificacion = analisis.get("clasificacion", "Malo")
+            categoria_tendencia = analisis.get("categoria_tendencia", "General")
+            justificacion = analisis.get("justificacion", "Clasificación automática por IA en lote.")
+
+            # Actualizar post en BD
+            await repo.actualizar_moderacion(
+                conexion=conexion,
+                post_id=post_id,
+                estado=clasificacion,
+                categoria=categoria_tendencia,
+                justificacion=justificacion
+            )
+
+            # Registrar en historial
+            historial_id = await repo.guardar_historial_moderacion(
+                conexion=conexion,
+                post_id=post_id,
+                clasificacion=clasificacion,
+                categoria_tendencia=categoria_tendencia,
+                justificacion=justificacion
+            )
+
+            moderados.append(
+                BatchModerationItem(
+                    post_id=post_id,
+                    texto=post["texto"],
+                    autor=post["autor"],
+                    red_social=post["red_social"],
+                    estado_moderacion=clasificacion,
+                    categoria_tendencia=categoria_tendencia,
+                    justificacion=justificacion,
+                    historial_id=historial_id
+                )
+            )
+
+        return BatchModerationResponse(
+            status="success",
+            procesados=len(pendientes),
+            moderados=moderados
+        )
+    except Exception as e:
+        logger.error(f"Error en endpoint POST /posts/moderate-pending: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error durante el proceso de moderación en lote: {str(e)}"
+        )
+
+
+@router.post("/generate-trends", response_model=List[TrendResponse], status_code=status.HTTP_201_CREATED)
+async def generate_daily_trends(
+    limit: int = Query(default=30, ge=1, le=100, description="Cantidad máxima de posts aprobados a analizar"),
+    conexion: asyncmy.Connection = Depends(obtener_conexion_bd)
+):
+    """
+    Agrupa posts con estado 'Aprobado', analiza sus textos con DeepSeek,
+    y sintetiza las principales tendencias guardándolas en 'tendencias_dia'.
+    """
+    try:
+        # 1. Obtener posts aprobados
+        posts_aprobados = await repo.obtener_posts(conexion, estado="Aprobado", limit=limit)
+        textos = [p["texto"] for p in posts_aprobados if p.get("texto")]
+
+        if not textos:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No hay posts aprobados suficientes en la base de datos para sintetizar tendencias."
+            )
+
+        # 2. Generar tendencias con IA
+        tendencias_ia = await ai_moderator.sintetizar_tendencias_del_dia(textos)
+
+        # 3. Guardar e insertar cada tendencia en BD
+        guardadas = []
+        for t in tendencias_ia:
+            titulo = t.get("titulo", "Tendencia sin título")
+            resumen = t.get("resumen", "")
+            enfoque_comercial = t.get("enfoque_comercial", "")
+            palabras_clave = t.get("palabras_clave", [])
+
+            tendencia_id = await repo.guardar_tendencia_dia(
+                conexion=conexion,
+                titulo=titulo,
+                resumen=resumen,
+                enfoque_comercial=enfoque_comercial,
+                palabras_clave=palabras_clave
+            )
+
+            guardadas.append(
+                TrendResponse(
+                    id=tendencia_id,
+                    titulo=titulo,
+                    resumen=resumen,
+                    enfoque_comercial=enfoque_comercial,
+                    palabras_clave=palabras_clave
+                )
+            )
+
+        return guardadas
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Error en endpoint POST /posts/generate-trends: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al generar y guardar tendencias del día: {str(e)}"
+        )
+
+
+@router.get("/trends", response_model=List[TrendResponse], status_code=status.HTTP_200_OK)
+async def list_trends(
+    limit: int = Query(default=10, ge=1, le=50, description="Límite de tendencias a listar"),
+    conexion: asyncmy.Connection = Depends(obtener_conexion_bd)
+):
+    """
+    Obtiene los resúmenes de tendencias del día guardados históricamente.
+    """
+    try:
+        trends = await repo.obtener_tendencias_dia(conexion, limit=limit)
+        return trends
+    except Exception as e:
+        logger.error(f"Error en endpoint GET /posts/trends: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al consultar tendencias históricas: {str(e)}"
         )
