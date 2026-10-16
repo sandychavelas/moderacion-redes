@@ -5,7 +5,12 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 from app.core.excepciones import ServerException, BDException
 from app.core.validaciones import validar_configuracion_servidor
-from app.dependencies.database import crear_pool_conexiones, cerrar_pool_conexiones
+from app.dependencies.database import (
+    crear_pool_conexiones,
+    cerrar_pool_conexiones,
+    inicializar_esquema_si_no_existe,
+)
+import asyncio
 import logging
 
 logger = logging.getLogger("app")
@@ -23,7 +28,26 @@ from app.routers.moderation import router as moderation_router
 async def lifespan(app: FastAPI):
     try:
         validar_configuracion_servidor()
-        await crear_pool_conexiones()
+        
+        # Conexión resiliente con reintentos para entornos cloud (Railway / Docker)
+        max_reintentos = 8
+        espera = 2
+        for intento in range(1, max_reintentos + 1):
+            try:
+                await crear_pool_conexiones()
+                logger.info("Conexión a MariaDB establecida exitosamente.")
+                break
+            except BDException as e:
+                if intento == max_reintentos:
+                    logger.error(f"Fallo definitivo al conectar a la BD: {e.descripcion_interna}")
+                    raise
+                logger.warning(
+                    f"[Intento {intento}/{max_reintentos}] Esperando a la base de datos ({e.descripcion_interna}). Reintentando en {espera}s..."
+                )
+                await asyncio.sleep(espera)
+
+        # Crear esquema y datos semilla si no existen
+        await inicializar_esquema_si_no_existe()
     except ServerException as e:
         logger.error(f"Error de configuración del servidor: {e.descripcion_interna or e.message}")
         import os
@@ -52,26 +76,32 @@ def create_app() -> FastAPI:
     app.add_middleware(SlowAPIASGIMiddleware)
     configure_cors(app)
     include_routers(app)
+
+    @app.get("/", tags=["Health"])
+    @app.get("/health", tags=["Health"])
+    async def health_check():
+        return {
+            "status": "healthy",
+            "app": settings.PROJECT_NAME,
+            "version": settings.PROJECT_VERSION,
+            "env": settings.ENV,
+            "docs": f"{settings.API_V1_PREFIX}/docs" if settings.DOCS_ENABLED else "disabled",
+        }
+
     return app
 
 
 def configure_cors(app: FastAPI) -> None:
     """
-    Configura CORS con `allow_credentials=True`.
-
-    `allow_origins=*` está prohibido cuando `allow_credentials=True` (validado
-    al arranque). Los headers permitidos incluyen `X-CSRF-Token` para el
-    flujo CSRF y `X-Sensitive-Token` reservado para futuros endpoints
-    sensibles.
+    Configura CORS con soporte para Railway y orígenes definidos.
     """
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.CORS_ORIGINS,
+        allow_origin_regex=r"^https://.*\.railway\.app$",
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=[
-            "Content-Type"
-        ],
+        allow_headers=["*"],
     )
 
 

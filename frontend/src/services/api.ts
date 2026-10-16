@@ -1,6 +1,30 @@
-// Client API para conectarse al backend de FastAPI y proveer datos en Modo Demo
+export function getApiBaseUrl(): string {
+  // 1. Variable de entorno Vite inyectada durante build en Railway o local
+  const envUrl = (import.meta.env.VITE_API_URL as string | undefined)?.trim();
+  if (envUrl && envUrl !== 'http://localhost:8000' && envUrl !== 'http://localhost:8000/api/v1') {
+    const clean = envUrl.replace(/\/$/, '');
+    return clean.endsWith('/api/v1') ? clean : `${clean}/api/v1`;
+  }
 
-const BASE_URL = 'http://localhost:8000/api/v1';
+  // 2. Override manual en localStorage (útil para pruebas en vivo)
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('custom_api_url')?.trim();
+    if (saved) {
+      const clean = saved.replace(/\/$/, '');
+      return clean.endsWith('/api/v1') ? clean : `${clean}/api/v1`;
+    }
+
+    // 3. Si estamos en producción sobre HTTPS (ej. Railway)
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      return `${window.location.origin}/api/v1`;
+    }
+  }
+
+  // 4. Fallback de desarrollo local
+  return 'http://localhost:8000/api/v1';
+}
+
+const BASE_URL = getApiBaseUrl();
 
 let demoMode = true; // Por defecto inicia en Modo Demo para asegurar visualización inicial vistosa
 
