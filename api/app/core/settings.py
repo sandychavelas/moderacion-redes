@@ -49,12 +49,18 @@ class Settings:
     COOKIES_SECURE: bool = os.getenv("COOKIES_SECURE", "false").lower() == "true"
     COOKIES_SAMESITE: str = os.getenv("COOKIES_SAMESITE", "lax")
 
-    # Compatibilidad transparente con Railway (MYSQLHOST, MYSQLPORT, MYSQLUSER, etc.)
-    DB_HOST: str = os.getenv("DB_HOST") or os.getenv("MYSQLHOST") or os.getenv("MARIADB_HOST") or "localhost"
-    DB_PORT: int = _obtener_int_env("DB_PORT", _obtener_int_env("MYSQLPORT", 3306))
-    DB_USER: str = os.getenv("DB_USER") or os.getenv("MYSQLUSER") or os.getenv("MARIADB_USER") or "root"
-    DB_PASSWORD: str = os.getenv("DB_PASSWORD") or os.getenv("MYSQLPASSWORD") or os.getenv("MARIADB_PASSWORD") or ""
-    DB_NAME: str = os.getenv("DB_NAME") or os.getenv("MYSQLDATABASE") or os.getenv("MARIADB_DATABASE") or "moderacionbd"
+    # Compatibilidad transparente con Railway (MYSQLHOST / MYSQL_HOST, MYSQLDATABASE / MYSQL_DATABASE, etc.)
+    DB_HOST: str = os.getenv("DB_HOST") or os.getenv("MYSQLHOST") or os.getenv("MYSQL_HOST") or os.getenv("MARIADB_HOST") or "localhost"
+    DB_PORT: int = _obtener_int_env("DB_PORT", _obtener_int_env("MYSQLPORT", _obtener_int_env("MYSQL_PORT", 3306)))
+    DB_USER: str = os.getenv("DB_USER") or os.getenv("MYSQLUSER") or os.getenv("MYSQL_USER") or os.getenv("MARIADB_USER") or "root"
+    DB_PASSWORD: str = os.getenv("DB_PASSWORD") or os.getenv("MYSQLPASSWORD") or os.getenv("MYSQL_PASSWORD") or os.getenv("MARIADB_PASSWORD") or ""
+    DB_NAME: str = (
+        os.getenv("DB_NAME")
+        or os.getenv("MYSQLDATABASE")
+        or os.getenv("MYSQL_DATABASE")
+        or os.getenv("MARIADB_DATABASE")
+        or "moderacionbd"
+    )
     DB_POOL_SIZE: int = _obtener_int_env("DB_POOL_SIZE", 5)
     DB_CONNECTION_TIMEOUT: int = _obtener_int_env("DB_CONNECTION_TIMEOUT", 10)
 
