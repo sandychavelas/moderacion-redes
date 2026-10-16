@@ -44,7 +44,6 @@ COPY --from=builder /opt/venv /opt/venv
 
 WORKDIR /app
 COPY app ./app
-COPY schema.sql ./schema.sql
 
 USER app
 
