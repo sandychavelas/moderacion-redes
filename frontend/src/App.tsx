@@ -18,10 +18,20 @@ import {
   Flame,
   ThumbsUp,
   MessageSquare,
-  BookOpen
+  BookOpen,
+  Bell,
+  MapPin
 } from 'lucide-react';
 import * as api from './services/api';
 import logo from './assets/logo.png';
+import { ReloadPrompt } from './components/ReloadPrompt';
+import { DeviceFeaturesPanel } from './components/DeviceFeaturesPanel';
+import {
+  sendPushNotification,
+  requestDeviceLocation,
+  getNotificationPermission,
+} from './services/pwaFeatures';
+import type { ModeratorLocation } from './services/pwaFeatures';
 
 interface Post {
   id: number;
@@ -57,7 +67,7 @@ interface Analytics {
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'moderation' | 'analytics' | 'trends'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'moderation' | 'analytics' | 'trends' | 'pwa-features'>('dashboard');
   const [demoMode, setDemoModeState] = useState<boolean>(api.isDemoMode());
   
   // Data States
@@ -65,6 +75,9 @@ export default function App() {
   const [pendingPosts, setPendingPosts] = useState<any[]>([]);
   const [trends, setTrends] = useState<Trend[]>([]);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
+
+  // Estado de característica nativa (Geolocalización del moderador)
+  const [moderatorLocation, setModeratorLocation] = useState<ModeratorLocation | null>(null);
 
   // Derived state: true pending posts count from database (production) or local pendingPosts (demo)
   const pendingCount = api.isDemoMode()
@@ -134,7 +147,14 @@ export default function App() {
     try {
       await api.extraerPostsRedes(10);
       await loadData();
-    } catch (e) {
+      if (getNotificationPermission() === 'granted') {
+        void sendPushNotification({
+          title: '📥 Nuevas Publicaciones Extraídas',
+          body: 'Se han extraído nuevos posts de redes sociales listos para moderación.',
+          tag: 'extract-posts',
+        });
+      }
+    } catch {
       alert("Error al extraer posts");
     } finally {
       setExtracting(false);
@@ -145,9 +165,16 @@ export default function App() {
   const handleModerateBatch = async () => {
     setModerating(true);
     try {
-      await api.moderarLotePendiente(10);
+      const res = await api.moderarLotePendiente(10);
       await loadData();
-    } catch (e) {
+      if (getNotificationPermission() === 'granted') {
+        void sendPushNotification({
+          title: '🛡️ Lote Moderado con IA',
+          body: `Se procesaron ${res?.procesados || 'las'} publicaciones pendientes exitosamente.`,
+          tag: 'moderate-batch',
+        });
+      }
+    } catch {
       alert("Error al moderar lote");
     } finally {
       setModerating(false);
@@ -160,7 +187,14 @@ export default function App() {
     try {
       await api.sintetizarTendencias(30);
       await loadData();
-    } catch (e) {
+      if (getNotificationPermission() === 'granted') {
+        void sendPushNotification({
+          title: '✨ Síntesis de Tendencias IA Completada',
+          body: 'Ya están disponibles los nuevos enfoques comerciales en la pestaña Tendencias.',
+          tag: 'trends-ready',
+        });
+      }
+    } catch {
       alert("Error al generar tendencias. Asegúrate de tener posts 'Aprobados' en el sistema.");
     } finally {
       setSynthesizing(false);
@@ -171,12 +205,16 @@ export default function App() {
   const handleModerateSingle = async (postId: number, approved: boolean = true) => {
     try {
       if (api.isDemoMode()) {
-        api.moderarPostDemoManual(postId, approved ? 'Aprobado' : 'Malo');
+        api.moderarPostDemoManual(
+          postId,
+          approved ? 'Aprobado' : 'Malo',
+          moderatorLocation?.zoneLabel
+        );
       } else {
         await api.moderarPostUnico(postId);
       }
       await loadData();
-    } catch (e) {
+    } catch {
       alert("Error al moderar el post");
     }
   };
@@ -245,6 +283,13 @@ export default function App() {
             <TrendingUp className="w-4 h-4" />
             Tendencias IA
           </button>
+          <button 
+            onClick={() => setActiveTab('pwa-features')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'pwa-features' ? 'bg-indigo-600/90 text-white shadow-md' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'}`}
+          >
+            <Bell className="w-4 h-4 text-cyan-400" />
+            Push y Dispositivo
+          </button>
         </nav>
 
         {/* Demo Mode Toggle */}
@@ -298,6 +343,13 @@ export default function App() {
           className={`flex-none px-4 py-1.5 rounded-lg text-xs font-bold ${activeTab === 'trends' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}
         >
           Tendencias
+        </button>
+        <button 
+          onClick={() => setActiveTab('pwa-features')}
+          className={`flex-none px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 ${activeTab === 'pwa-features' ? 'bg-indigo-600 text-white' : 'text-cyan-400'}`}
+        >
+          <Bell className="w-3 h-3" />
+          Push y Dispositivo
         </button>
       </div>
 
@@ -654,6 +706,28 @@ export default function App() {
                   </span>
                 </h2>
                 <p className="text-xs text-slate-400">Analiza individualmente las publicaciones antes de que se aprueben para el feed general</p>
+                {moderatorLocation ? (
+                  <p className="text-[11px] text-cyan-400 font-semibold mt-1 flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5" />
+                    Sello de Auditoría GPS activo: {moderatorLocation.zoneLabel} (±{moderatorLocation.accuracy}m)
+                  </p>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const res = await requestDeviceLocation();
+                      if (res.success && res.location) {
+                        setModeratorLocation(res.location);
+                      } else {
+                        setActiveTab('pwa-features');
+                      }
+                    }}
+                    className="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold mt-1 flex items-center gap-1"
+                  >
+                    <MapPin className="w-3.5 h-3.5" />
+                    + Activar ubicación del moderador para sello de auditoría
+                  </button>
+                )}
               </div>
 
               <button 
@@ -901,7 +975,17 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {/* --- TAB CONTENT: PRÁCTICA 2.1 - PUSH Y CARACTERÍSTICAS NATIVAS --- */}
+        {activeTab === 'pwa-features' && (
+          <DeviceFeaturesPanel
+            moderatorLocation={moderatorLocation}
+            onLocationUpdate={setModeratorLocation}
+            pendingCount={pendingCount}
+          />
+        )}
       </main>
+      <ReloadPrompt />
     </div>
   );
 }

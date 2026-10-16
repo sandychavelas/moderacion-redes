@@ -450,11 +450,17 @@ export function obtenerPendientesDemo() {
   return [...mockPendientes];
 }
 
-export function moderarPostDemoManual(postId: number, estado: 'Aprobado' | 'Malo') {
+export function moderarPostDemoManual(
+  postId: number,
+  estado: 'Aprobado' | 'Malo',
+  ubicacionAuditor?: string
+) {
   const postIndex = mockPendientes.findIndex(p => p.id === postId);
   if (postIndex === -1) return null;
   const post = mockPendientes[postIndex];
   mockPendientes.splice(postIndex, 1);
+
+  const sufijoUbicacion = ubicacionAuditor ? ` [Auditado desde: ${ubicacionAuditor}]` : '';
 
   const veredicto = {
     id: post.id,
@@ -466,8 +472,8 @@ export function moderarPostDemoManual(postId: number, estado: 'Aprobado' | 'Malo
     estado_moderacion: estado,
     categoria_tendencia: estado === 'Aprobado' ? "General" : "Rechazo Manual",
     justificacion_moderacion: estado === 'Aprobado'
-      ? "Aprobado manualmente por el moderador."
-      : "Rechazado manualmente por el moderador.",
+      ? `Aprobado manualmente por el moderador.${sufijoUbicacion}`
+      : `Rechazado manualmente por el moderador.${sufijoUbicacion}`,
     fecha_extraccion: new Date().toISOString()
   };
 
