@@ -1,0 +1,24 @@
+# Entornos virtuales locales
+.venv/
+venv/
+
+# Cache de Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Secretos y entorno local
+.env
+.env.*
+!.env.example
+
+# Pruebas y documentacion (no se necesitan en la imagen)
+tests/
+*.md
+
+# Control de versiones y OS
+.git/
+.gitignore
+.DS_Store
+Thumbs.db

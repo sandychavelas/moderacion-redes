@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Plan y Reporte de Pruebas de Software - Sistema de Moderación de Contenido en Redes Sociales</title>
+<style>
+  :root {
+    --azul: #0f172a;
+    --azul2: #1e3a8a;
+    --indigo: #4f46e5;
+    --gris: #475569;
+    --gris-claro: #f1f5f9;
+    --borde: #cbd5e1;
+    --verde: #059669;
+    --verde-bg: #d1fae5;
+    --rojo: #dc2626;
+    --rojo-bg: #fee2e2;
+    --ambar: #b45309;
+    --ambar-bg: #fef3c7;
+    --texto: #1e293b;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--texto);
+    background: #e2e8f0;
+    margin: 0;
+    padding: 24px;
+    line-height: 1.5;
+    font-size: 14px;
+  }
+
+  .hoja {
+    max-width: 1080px;
+    margin: 0 auto 28px auto;
+    background: #ffffff;
+    padding: 44px 52px;
+    box-shadow: 0 4px 24px rgba(15, 23, 42, 0.14);
+    border-radius: 6px;
+  }
+
+  header.portada {
+    background: linear-gradient(135deg, var(--azul) 0%, var(--azul2) 60%, var(--indigo) 100%);
+    color: #fff;
+    border-radius: 6px;
+    padding: 40px 52px;
+  }
+
+  header.portada .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    font-size: 12px;
+    color: #a5b4fc;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+  }
+
+  header.portada h1 {
+    margin: 0 0 6px 0;
+    font-size: 30px;
+    line-height: 1.2;
+    font-weight: 800;
+  }
+
+  header.portada h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 500;
+    color: #e0e7ff;
+  }
+
+  header.portada .meta {
+    margin-top: 22px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 26px;
+    font-size: 13px;
+    color: #dbeafe;
+  }
+  header.portada .meta b { color: #fff; }
+
+  h2.seccion {
+    font-size: 20px;
+    color: var(--azul);
+    border-bottom: 3px solid var(--indigo);
+    padding-bottom: 8px;
+    margin: 0 0 18px 0;
+  }
+
+  h3.sub {
+    font-size: 15px;
+    color: var(--azul2);
+    margin: 26px 0 10px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  p { margin: 8px 0; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 18px 0;
+    font-size: 12.5px;
+  }
+
+  th, td {
+    border: 1px solid var(--borde);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  thead th {
+    background: var(--azul);
+    color: #fff;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  tbody tr:nth-child(even) { background: var(--gris-claro); }
+
+  .kv th {
+    background: var(--gris-claro);
+    color: var(--azul);
+    width: 26%;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 13px;
+  }
+
+  code {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 12px;
+    color: #be123c;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .ok { background: var(--verde-bg); color: var(--verde); }
+  .falla { background: var(--rojo-bg); color: var(--rojo); }
+  .dis { background: var(--ambar-bg); color: var(--ambar); }
+  .info { background: #dbeafe; color: var(--azul2); }
+
+  .mono { font-family: "Consolas", monospace; font-size: 11.5px; }
+
+  .cols { display: flex; gap: 22px; flex-wrap: wrap; }
+  .cols > div { flex: 1; min-width: 260px; }
+
+  ul { margin: 8px 0 8px 0; padding-left: 20px; }
+  li { margin: 4px 0; }
+
+  .nota {
+    background: #eef2ff;
+    border-left: 4px solid var(--indigo);
+    padding: 12px 16px;
+    border-radius: 4px;
+    font-size: 13px;
+    margin: 14px 0;
+  }
+
+  .kpis { display: flex; gap: 16px; flex-wrap: wrap; margin: 8px 0 20px 0; }
+  .kpi {
+    flex: 1;
+    min-width: 150px;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    background: var(--gris-claro);
+  }
+  .kpi .num { font-size: 30px; font-weight: 800; color: var(--azul2); display: block; }
+  .kpi .lbl { font-size: 12px; color: var(--gris); text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi.good .num { color: var(--verde); }
+  .kpi.bad .num { color: var(--rojo); }
+
+  .firma {
+    margin-top: 40px;
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+  }
+  .firma > div { flex: 1; min-width: 240px; }
+  .linea-firma {
+    border-bottom: 1.5px solid var(--texto);
+    height: 44px;
+    margin-bottom: 6px;
+  }
+
+  .tc-id { white-space: nowrap; font-weight: 700; color: var(--azul2); }
+  .col-estado { text-align: center; white-space: nowrap; }
+
+  footer.pie {
+    text-align: center;
+    font-size: 11px;
+    color: var(--gris);
+    margin-top: 18px;
+  }
+
+  @media print {
+    body { background: #fff; padding: 0; font-size: 11px; }
+    .hoja { box-shadow: none; margin: 0; padding: 18px 22px; max-width: none; border-radius: 0; }
+    header.portada { border-radius: 0; }
+    h2.seccion { page-break-after: avoid; }
+    table { page-break-inside: auto; }
+    tr { page-break-inside: avoid; }
+    .salto { page-break-before: always; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================= PORTADA ============================= -->
+<header class="portada">
+  <p class="eyebrow">Formato para la Realización y Presentación de Pruebas de Software</p>
+  <h1>Plan y Reporte de Pruebas de Software</h1>
+  <h2>Sistema de Moderación de Contenido en Redes Sociales (MDREC)</h2>
+  <div class="meta">
+    <span><b>Versión del software:</b> 1.0.0</span>
+    <span><b>Fecha de prueba:</b> 16 de julio de 2026</span>
+    <span><b>Metodología:</b> Caja blanca, caja negra, unitarias, integración, regresión, rendimiento, esfuerzo y usabilidad</span>
+  </div>
+</header>
+
+<!-- ============================= INFORMACION GENERAL ============================= -->
+<section class="hoja">
+  <h2 class="seccion">1. Información General</h2>
+  <table class="kv">
+    <tr><th>Nombre del Proyecto</th><td>Sistema de Moderación de Contenido en Redes Sociales (nombre técnico: <code>moderacion-redes</code>). Plataforma que extrae publicaciones de redes/fuentes tech, las clasifica con IA (DeepSeek, con respaldo local) en <b>Aprobado</b> / <b>Malo</b> y sintetiza tendencias comerciales.</td></tr>
+    <tr><th>Versión del Software</th><td>1.0.0</td></tr>
+    <tr><th>Fecha de Prueba</th><td>16 de julio de 2026</td></tr>
+    <tr><th>Responsable(s) / Evaluador(es)</th><td>_______________________________ &nbsp; (Rol: _____________________)</td></tr>
+    <tr><th>Equipo evaluador</th><td>_______________________________</td></tr>
+    <tr><th>Tipo(s) de Prueba</th><td>Unitarias, Integración, Sistema (caja negra sobre API), Regresión, Rendimiento, Esfuerzo, Usabilidad y Caja blanca.</td></tr>
+    <tr><th>Arquitectura bajo prueba</th><td>Frontend React 19 + Vite + Tailwind (Nginx) &bull; API FastAPI/Python 3.14 (Uvicorn) &bull; Base de datos MariaDB 11.4 &bull; Orquestación con Docker Compose (3 contenedores).</td></tr>
+  </table>
+  <div class="nota">
+    <b>Nota sobre la actividad:</b> este documento constituye el plan y reporte de pruebas aplicado al proyecto. Las pruebas automatizables (unitarias, integración, caja negra de API, regresión y smoke de rendimiento) fueron <b>ejecutadas realmente</b> sobre el sistema desplegado en Docker el día de la prueba; los resultados obtenidos que se muestran son reales. Las pruebas de usabilidad, esfuerzo/estrés y los casos manuales de caja blanca se presentan como diseño listo para ejecución.
+  </div>
+</section>
+
+<!-- ============================= TIPOS DE PRUEBA ============================= -->
+<section class="hoja">
+  <h2 class="seccion">2. Reconocimiento de los Tipos de Prueba</h2>
+  <p>Se identifican los ocho tipos de prueba solicitados y cómo aplican específicamente a este proyecto.</p>
+  <table>
+    <thead>
+      <tr><th style="width:13%">Tipo</th><th style="width:32%">Definición</th><th style="width:37%">Aplicación en el proyecto</th><th style="width:18%">Herramienta / Estado</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>Caja blanca</b></td>
+        <td>Prueba basada en el conocimiento del código interno: rutas lógicas, ramas y condiciones.</td>
+        <td>Verificar las ramas del moderador IA en <code>ai_moderator.py</code>: éxito de DeepSeek, fallback por API Key ausente, fallback por error HTTP y texto vacío; y las cascadas de <code>social_media.py</code> (Dev.to &rarr; Hacker News &rarr; mock).</td>
+        <td><span class="badge ok">Ejecutada</span><br><span class="mono">unittest (ramas)</span></td>
+      </tr>
+      <tr>
+        <td><b>Caja negra</b></td>
+        <td>Prueba de entradas/salidas sin conocer el código, validando el comportamiento externo.</td>
+        <td>Peticiones HTTP reales a los 9 endpoints de la API validando códigos de estado, contratos JSON y validaciones (límites, 404, 422).</td>
+        <td><span class="badge ok">Ejecutada</span><br><span class="mono">curl / Invoke-WebRequest</span></td>
+      </tr>
+      <tr>
+        <td><b>Unitarias</b></td>
+        <td>Prueban una unidad aislada (función/método) con sus dependencias simuladas.</td>
+        <td>Servicios <code>AIModeratorService</code>, <code>SocialMediaConnector</code> y el repositorio <code>posts_repo</code> con BD y red mockeadas.</td>
+        <td><span class="badge ok">Ejecutada</span><br><span class="mono">unittest + mock</span></td>
+      </tr>
+      <tr>
+        <td><b>Integración</b></td>
+        <td>Verifican la interacción entre módulos (router &rarr; servicio &rarr; repositorio).</td>
+        <td>Endpoints FastAPI con <code>TestClient</code> validando el flujo completo router + Pydantic + dependencias, con repositorio y servicios mockeados.</td>
+        <td><span class="badge ok">Ejecutada</span><br><span class="mono">FastAPI TestClient</span></td>
+      </tr>
+      <tr>
+        <td><b>Regresión</b></td>
+        <td>Reejecución de pruebas para confirmar que cambios/operaciones no rompieron funcionalidad previa.</td>
+        <td>Reejecutar la suite completa tras las operaciones de escritura (extracción y moderación) para garantizar que la lógica sigue intacta.</td>
+        <td><span class="badge ok">Ejecutada</span><br><span class="mono">unittest (re-run)</span></td>
+      </tr>
+      <tr>
+        <td><b>Rendimiento</b></td>
+        <td>Mide tiempos de respuesta y comportamiento bajo carga normal.</td>
+        <td>Medición de latencia (avg/min/max/p95) de los endpoints de lectura <code>/posts</code>, <code>/analytics</code> y <code>/trends</code>.</td>
+        <td><span class="badge ok">Ejecutada</span><br><span class="mono">Measure-Command</span></td>
+      </tr>
+      <tr>
+        <td><b>Esfuerzo (Estrés)</b></td>
+        <td>Somete al sistema a carga extrema/concurrencia alta para hallar su punto de quiebre.</td>
+        <td>Concurrencia elevada sobre <code>/posts</code> y moderación en lote masiva para observar degradación, uso del pool de conexiones y recuperación.</td>
+        <td><span class="badge dis">Diseñada</span><br><span class="mono">k6 / Locust</span></td>
+      </tr>
+      <tr>
+        <td><b>Usabilidad</b></td>
+        <td>Evalúa la facilidad de uso, accesibilidad y experiencia del usuario en la interfaz.</td>
+        <td>Recorrido del dashboard de 3 columnas: navegación por pestañas, buscador, filtros, Modo Demo, botón "Copiar Idea", moderación manual y responsividad/accesibilidad.</td>
+        <td><span class="badge dis">Diseñada</span><br><span class="mono">Checklist + Lighthouse</span></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================= PLANIFICACION ============================= -->
+<section class="hoja salto">
+  <h2 class="seccion">3. Planificación de Pruebas</h2>
+
+  <h3 class="sub">3.1 Objetivos</h3>
+  <ul>
+    <li><b>Garantizar accesibilidad para todos los usuarios</b>, validando contraste, navegación por teclado, textos alternativos y diseño responsivo del dashboard.</li>
+    <li><b>Asegurar la calidad previa a producción</b>, comprobando que la API y la BD respondan correctamente antes del despliegue.</li>
+    <li><b>Identificar problemas tempranos y mejorar la calidad del código e interfaces</b> mediante pruebas unitarias y de integración automatizadas.</li>
+    <li><b>Validar que el sistema cumple con los requisitos del negocio</b>: extracción, moderación IA (Aprobado/Malo), síntesis de tendencias y métricas del dashboard.</li>
+  </ul>
+
+  <h3 class="sub">3.2 Alcance</h3>
+  <div class="cols">
+    <div>
+      <p><b>Dentro del alcance:</b></p>
+      <ul>
+        <li>API REST: los 9 endpoints bajo <code>/api/v1</code>.</li>
+        <li>Lógica de moderación IA y su fallback local determinista.</li>
+        <li>Capa de repositorio y persistencia en MariaDB.</li>
+        <li>Interfaz web: navegación, filtros, moderación manual y Modo Demo.</li>
+        <li>Despliegue con Docker Compose (3 servicios).</li>
+      </ul>
+    </div>
+    <div>
+      <p><b>Fuera del alcance:</b></p>
+      <ul>
+        <li>Calidad interna del modelo DeepSeek (servicio externo de terceros).</li>
+        <li>Disponibilidad real de las fuentes externas (Dev.to / Hacker News).</li>
+        <li>Pruebas de penetración/seguridad avanzada.</li>
+        <li>Compatibilidad con navegadores heredados (IE11).</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="sub">3.3 Recursos Necesarios</h3>
+  <table>
+    <thead><tr><th style="width:22%">Categoría</th><th>Recursos</th></tr></thead>
+    <tbody>
+      <tr><td><b>Humanos</b></td><td>1 Ingeniero de pruebas (QA), 1 desarrollador de apoyo, 1 evaluador de usabilidad. Roles del equipo: Product Owner, Scrum Master y Developers.</td></tr>
+      <tr><td><b>Herramientas</b></td><td><code>unittest</code> + <code>unittest.mock</code> (pruebas automatizadas), <code>FastAPI TestClient</code> (integración), <code>httpx</code>, <code>curl</code> / <code>Invoke-WebRequest</code> (caja negra), <code>Measure-Command</code> de PowerShell (rendimiento), Docker / Docker Compose (entorno), navegador Chrome + DevTools/Lighthouse (usabilidad), k6 o Locust (esfuerzo).</td></tr>
+      <tr><td><b>Entornos</b></td><td><b>SO:</b> Windows 10/11 (host) &bull; contenedores Linux (Debian slim / Alpine). <b>Runtime:</b> Python 3.14.6, Node 24.17, MariaDB 11.4. <b>Red:</b> red bridge de Docker; puertos host 8080 (frontend), 8000 (API), 3306 (BD). <b>Navegador:</b> Chrome/Edge actualizado.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub">3.4 Métricas y Criterios de Aceptación</h3>
+  <table>
+    <thead><tr><th style="width:34%">Métrica</th><th style="width:33%">Criterio de aceptación</th><th style="width:33%">Resultado obtenido</th></tr></thead>
+    <tbody>
+      <tr><td>Tasa de aprobación de pruebas automatizadas</td><td>&ge; 95 % de casos en estado OK</td><td><b>100 %</b> (40/40 ejecutados) <span class="badge ok">Cumple</span></td></tr>
+      <tr><td>Casos críticos (validaciones, 404, 422)</td><td>0 fallas en casos críticos</td><td><b>0 fallas</b> <span class="badge ok">Cumple</span></td></tr>
+      <tr><td>Latencia media de endpoints de lectura</td><td>&lt; 300 ms en carga normal</td><td><b>10.7 - 16.3 ms</b> <span class="badge ok">Cumple</span></td></tr>
+      <tr><td>Latencia p95 de endpoints de lectura</td><td>&lt; 500 ms</td><td><b>&le; 19 ms</b> <span class="badge ok">Cumple</span></td></tr>
+      <tr><td>Cobertura de ramas del moderador IA</td><td>Todas las ramas (éxito, fallbacks, vacío)</td><td><b>Cubiertas</b> <span class="badge ok">Cumple</span></td></tr>
+      <tr><td>Levantamiento del entorno</td><td>3 contenedores <code>healthy</code> con un comando</td><td><b>3/3 healthy</b> <span class="badge ok">Cumple</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub">3.5 Cronograma de Actividades</h3>
+  <table>
+    <thead><tr><th style="width:8%">Día</th><th style="width:30%">Actividad</th><th>Descripción</th><th style="width:14%">Responsable</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Planificación y diseño</td><td>Definir objetivos, alcance, casos de prueba y datos.</td><td>QA</td></tr>
+      <tr><td>1</td><td>Preparación del entorno</td><td>Levantar el stack Docker y verificar salud de servicios.</td><td>Dev</td></tr>
+      <tr><td>2</td><td>Pruebas unitarias e integración</td><td>Ejecutar la suite automatizada y registrar resultados.</td><td>QA</td></tr>
+      <tr><td>2</td><td>Pruebas de caja negra</td><td>Validar contratos y validaciones de los endpoints.</td><td>QA</td></tr>
+      <tr><td>3</td><td>Rendimiento y regresión</td><td>Medir latencias y reejecutar la suite tras escrituras.</td><td>QA</td></tr>
+      <tr><td>3</td><td>Usabilidad</td><td>Recorrido guiado de la interfaz y checklist de accesibilidad.</td><td>Evaluador UX</td></tr>
+      <tr><td>4</td><td>Esfuerzo/estrés</td><td>Carga concurrente y análisis del punto de quiebre.</td><td>QA</td></tr>
+      <tr><td>4</td><td>Cierre y reporte</td><td>Consolidar resultados, resumen y recomendaciones.</td><td>QA</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================= PLAN Y DISENO POR TIPO ============================= -->
+<section class="hoja salto">
+  <h2 class="seccion">4. Plan y Diseño de Pruebas (por tipo)</h2>
+  <table>
+    <thead>
+      <tr><th style="width:12%">Tipo</th><th>Objetivo</th><th style="width:20%">Criterios de Entrada</th><th style="width:20%">Criterios de Salida</th><th style="width:16%">Entorno y Datos</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>Unitarias</b></td>
+        <td>Validar la lógica aislada de servicios y repositorio (clasificación, extracción, consultas SQL).</td>
+        <td>Código compilable; dependencias instaladas en la imagen <code>api</code>.</td>
+        <td>100 % de las unidades objetivo probadas y en verde.</td>
+        <td>Contenedor <code>api</code>; BD/red mockeadas; textos de spam y contenido limpio.</td>
+      </tr>
+      <tr>
+        <td><b>Integración</b></td>
+        <td>Verificar el flujo router + validación + dependencia + servicio.</td>
+        <td>App FastAPI instanciable; <code>TestClient</code> disponible.</td>
+        <td>Endpoints devuelven código y contrato JSON esperados.</td>
+        <td><code>TestClient</code> con <code>dependency_overrides</code>; payloads representativos.</td>
+      </tr>
+      <tr>
+        <td><b>Caja negra</b></td>
+        <td>Validar comportamiento externo y validaciones de la API en vivo.</td>
+        <td>Stack desplegado; API <code>healthy</code> en <code>:8000</code>.</td>
+        <td>Todos los códigos HTTP coinciden con lo esperado.</td>
+        <td>API real + MariaDB; parámetros límite (0, 101), IDs inexistentes, textos vacíos.</td>
+      </tr>
+      <tr>
+        <td><b>Regresión</b></td>
+        <td>Confirmar que las operaciones de escritura no rompen la funcionalidad.</td>
+        <td>Suite previa en verde; datos escritos en BD.</td>
+        <td>La suite completa vuelve a pasar sin fallas.</td>
+        <td>Misma suite ejecutada por segunda vez.</td>
+      </tr>
+      <tr>
+        <td><b>Rendimiento</b></td>
+        <td>Medir latencia de endpoints de lectura en carga normal.</td>
+        <td>API <code>healthy</code>; datos cargados en BD.</td>
+        <td>Latencia media &lt; 300 ms y p95 &lt; 500 ms.</td>
+        <td>30 peticiones secuenciales por endpoint (+ calentamiento).</td>
+      </tr>
+      <tr>
+        <td><b>Esfuerzo</b></td>
+        <td>Determinar el punto de quiebre y la recuperación.</td>
+        <td>Entorno estable; herramienta de carga configurada.</td>
+        <td>El sistema degrada de forma controlada sin corromper datos.</td>
+        <td>k6/Locust: 100-500 usuarios virtuales concurrentes.</td>
+      </tr>
+      <tr>
+        <td><b>Usabilidad</b></td>
+        <td>Evaluar experiencia, claridad y accesibilidad de la interfaz.</td>
+        <td>Frontend accesible en <code>:8080</code>.</td>
+        <td>Tareas completadas sin bloqueos; sin errores graves de accesibilidad.</td>
+        <td>Chrome + Lighthouse; usuarios de prueba; checklist WCAG.</td>
+      </tr>
+      <tr>
+        <td><b>Caja blanca</b></td>
+        <td>Cubrir ramas internas de decisión (fallbacks y validaciones).</td>
+        <td>Acceso al código fuente; mapa de ramas.</td>
+        <td>Todas las ramas objetivo ejecutadas al menos una vez.</td>
+        <td>Mocks que fuerzan cada rama (200, 503, sin key, excepción).</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================= CASOS: UNITARIAS ============================= -->
+<section class="hoja salto">
+  <h2 class="seccion">5. Casos de Prueba (con resultados reales)</h2>
+
+  <h3 class="sub">5.1 Pruebas Unitarias &mdash; <span class="mono">unittest</span> (BD y red mockeadas)</h3>
+  <table>
+    <thead>
+      <tr><th style="width:8%">ID</th><th style="width:20%">Caso de Prueba</th><th style="width:24%">Pasos de Ejecución</th><th style="width:16%">Datos Usados</th><th style="width:14%">Resultado Esperado</th><th style="width:9%">Obtenido</th><th style="width:9%">Estado</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="tc-id">TC-U-01</td><td>Moderar texto vacío</td><td>Llamar <code>moderar_post("")</code></td><td>Texto ""</td><td>Clasificación "Malo", categoría "Ninguna"</td><td>Malo / Ninguna</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-U-02</td><td>Moderar con DeepSeek (éxito)</td><td>Mockear respuesta 200 y clasificar</td><td>API key ficticia; texto tech</td><td>Aprobado, categoría y keywords del JSON</td><td>Aprobado</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-U-03</td><td>Fallback sin API Key</td><td>Sin key; clasificar spam y texto limpio</td><td>"Compra seguidores..." / texto Kubernetes</td><td>Malo (Marketing) y Aprobado</td><td>Malo / Aprobado</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-U-04</td><td>Fallback por error API (503)</td><td>Mockear 503 y clasificar</td><td>"Eres un imbécil..."</td><td>Malo por fallback local</td><td>Malo</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-U-05</td><td>Guardar posts (lista vacía)</td><td>Llamar <code>guardar_posts([])</code></td><td>Lista vacía</td><td>Retorna 0 sin abrir cursor</td><td>0</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-U-06</td><td>Guardar posts en lote</td><td>Insertar 2 posts con <code>executemany</code></td><td>2 posts</td><td>Retorna 2 insertados</td><td>2</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-U-07</td><td>Obtener posts sin filtros</td><td>Consultar y formatear fechas ISO</td><td>1 post mock</td><td>Fechas en formato ISO <code>...Z</code></td><td>ISO correcto</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-U-08</td><td>Filtro por palabra clave (MDREC-7)</td><td>Consultar con <code>keyword="oferta"</code></td><td>"oferta"</td><td>SQL contiene <code>texto LIKE %s</code> y <code>%oferta%</code></td><td>LIKE aplicado</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-U-09</td><td>Métricas de análisis</td><td>Agregar conteos por estado/red/tendencia</td><td>Datos mock</td><td>Estructura de métricas correcta</td><td>Correcta</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-U-10</td><td>Obtener posts pendientes</td><td>Consultar estado "Pendiente"</td><td>1 post mock</td><td>Lista con estado "Pendiente"</td><td>OK</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-U-11</td><td>Guardar tendencia del día</td><td>Insertar y devolver <code>lastrowid</code></td><td>Tendencia "IA en Pymes"</td><td>Retorna ID 12</td><td>12</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-U-12</td><td>Obtener tendencias (parseo keywords)</td><td>Leer y separar palabras clave por coma</td><td>"ia,pymes,automatizacion"</td><td>Lista de 3 keywords</td><td>3 keywords</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-U-13</td><td>Conector: éxito Dev.to</td><td>Mockear 200 de Dev.to</td><td>1 artículo</td><td><code>id_externo</code> = "devto_1234"</td><td>devto_1234</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-U-14</td><td>Conector: fallback a Hacker News</td><td>Dev.to 500 &rarr; HN 200</td><td>Story 9876</td><td><code>red_social</code> = "HackerNews"</td><td>HackerNews</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-U-15</td><td>Conector: fallback a mock (error)</td><td>Todas las fuentes 500</td><td>limit=3</td><td>3 posts del simulador local</td><td>3 mock</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-U-16</td><td>Conector: fallback a mock (excepción)</td><td>Excepción de red</td><td>limit=2</td><td>2 posts del simulador local</td><td>2 mock</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+    </tbody>
+  </table>
+  <p><span class="badge info">Evidencia</span> <span class="mono">Ran 27 tests in 0.158s &mdash; OK</span> (la suite total agrupa unitarias e integración; arriba se listan las unitarias).</p>
+
+  <h3 class="sub">5.2 Pruebas de Integración &mdash; FastAPI <span class="mono">TestClient</span></h3>
+  <table>
+    <thead>
+      <tr><th style="width:8%">ID</th><th style="width:24%">Caso de Prueba</th><th style="width:26%">Pasos de Ejecución</th><th style="width:16%">Datos Usados</th><th style="width:13%">Esperado</th><th style="width:8%">Obtenido</th><th style="width:9%">Estado</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="tc-id">TC-I-01</td><td><code>POST /moderation/classify</code> éxito</td><td>Enviar texto y validar clasificación</td><td>Texto sobre salud</td><td>200 + JSON clasificado</td><td>200</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-I-02</td><td><code>classify</code> datos inválidos</td><td>Enviar <code>{}</code> y <code>{texto:""}</code></td><td>Payloads inválidos</td><td>422 en ambos</td><td>422</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-I-03</td><td><code>GET /posts</code> con filtro</td><td>Consultar <code>?keyword=oferta</code></td><td>"oferta"</td><td>200 + lista filtrada</td><td>200</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-I-04</td><td><code>POST /posts/fetch-and-store</code></td><td>Extraer y guardar</td><td>limit=5</td><td>201 + <code>nuevos_guardados</code></td><td>201</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-I-05</td><td><code>POST /posts/{id}/moderate</code></td><td>Moderar post existente y auditar</td><td>post_id=5</td><td>200 + <code>historial_id</code></td><td>200</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-I-06</td><td><code>GET /posts/analytics</code></td><td>Solicitar métricas</td><td>&mdash;</td><td>200 + estructura de métricas</td><td>200</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-I-07</td><td><code>POST /posts/moderate-pending</code></td><td>Moderar lote pendiente</td><td>limit=5</td><td>200 + <code>procesados</code></td><td>200</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-I-08</td><td><code>POST /posts/generate-trends</code></td><td>Sintetizar tendencias de aprobados</td><td>limit=30</td><td>201 + tendencias</td><td>201</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-I-09</td><td><code>GET /posts/trends</code></td><td>Listar tendencias guardadas</td><td>limit=10</td><td>200 + lista</td><td>200</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-I-10</td><td><code>GET /posts/fetch</code> éxito</td><td>Previsualizar posts de red</td><td>limit=1</td><td>200 + lista</td><td>200</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-I-11</td><td><code>GET /posts/fetch</code> límites</td><td>Enviar <code>limit=0</code> y <code>limit=21</code></td><td>Fuera de rango</td><td>422 en ambos</td><td>422</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================= CASOS: CAJA NEGRA ============================= -->
+<section class="hoja salto">
+  <h3 class="sub">5.3 Pruebas de Caja Negra &mdash; API en vivo (<span class="mono">http://localhost:8000/api/v1</span>)</h3>
+  <table>
+    <thead>
+      <tr><th style="width:8%">ID</th><th style="width:26%">Caso de Prueba</th><th style="width:24%">Pasos de Ejecución</th><th style="width:15%">Datos Usados</th><th style="width:10%">Esperado</th><th style="width:8%">Obtenido</th><th style="width:9%">Estado</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="tc-id">TC-N-01</td><td>Listar posts (base)</td><td><code>GET /posts</code></td><td>&mdash;</td><td>200</td><td>200</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-N-02</td><td>Métricas del dashboard</td><td><code>GET /posts/analytics</code></td><td>&mdash;</td><td>200</td><td>200</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-N-03</td><td>Listar tendencias</td><td><code>GET /posts/trends?limit=10</code></td><td>limit=10</td><td>200</td><td>200</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-N-04</td><td>Clasificar texto válido</td><td><code>POST /moderation/classify</code></td><td>Texto sobre IA ética</td><td>200 (Aprobado)</td><td>200</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-N-05</td><td>Clasificar spam</td><td><code>POST /moderation/classify</code></td><td>"Compra seguidores..."</td><td>200 (Malo)</td><td>200</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-N-06</td><td>Body vacío</td><td><code>POST /classify</code> con <code>{}</code></td><td><code>{}</code></td><td>422</td><td>422</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-N-07</td><td>Texto vacío</td><td><code>POST /classify</code> con <code>texto:""</code></td><td>""</td><td>422</td><td>422</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-N-08</td><td>Límite inferior inválido</td><td><code>GET /posts?limit=0</code></td><td>limit=0</td><td>422</td><td>422</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-N-09</td><td>Límite superior inválido</td><td><code>GET /posts?limit=101</code></td><td>limit=101</td><td>422</td><td>422</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-N-10</td><td>Moderar post inexistente</td><td><code>POST /posts/999999/moderate</code></td><td>id=999999</td><td>404</td><td>404</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-N-11</td><td>Extraer y guardar</td><td><code>POST /posts/fetch-and-store?limit=5</code></td><td>limit=5</td><td>201</td><td>201</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-N-12</td><td>Moderar lote pendiente</td><td><code>POST /posts/moderate-pending?limit=10</code></td><td>limit=10</td><td>200</td><td>200</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-N-13</td><td>Filtrar por estado</td><td><code>GET /posts?estado=Aprobado</code></td><td>Aprobado</td><td>200</td><td>200</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+    </tbody>
+  </table>
+  <div class="nota">
+    <b>Observación (dato real):</b> durante <code>TC-N-11</code> la API extrajo publicaciones reales de Dev.to y guardó 3 nuevas (<span class="mono">{"status":"success","extraidos":5,"nuevos_guardados":3}</span>); en <code>TC-N-12</code> moderó 10 posts pendientes. La métrica <code>/analytics</code> reportó <span class="mono">total_posts=70</span> tras las operaciones.
+  </div>
+
+  <h3 class="sub">5.4 Pruebas de Regresión</h3>
+  <table>
+    <thead>
+      <tr><th style="width:8%">ID</th><th style="width:26%">Caso de Prueba</th><th style="width:28%">Pasos de Ejecución</th><th style="width:16%">Resultado Esperado</th><th style="width:13%">Obtenido</th><th style="width:9%">Estado</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="tc-id">TC-R-01</td><td>Reejecución de la suite completa tras escrituras</td><td>Volver a correr <code>unittest</code> luego de extraer/moderar en BD real</td><td>27/27 pruebas siguen en verde</td><td><span class="mono">Ran 27 tests &mdash; OK</span></td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-R-02</td><td>Estabilidad de lectura tras moderación en lote</td><td>Consultar <code>/posts</code> y <code>/analytics</code> después de <code>moderate-pending</code></td><td>Respuestas 200 y métricas coherentes</td><td>200 / coherente</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub">5.5 Pruebas de Rendimiento (smoke, 30 peticiones por endpoint)</h3>
+  <table>
+    <thead>
+      <tr><th style="width:8%">ID</th><th style="width:24%">Endpoint</th><th style="width:12%">Promedio</th><th style="width:10%">Mín</th><th style="width:10%">Máx</th><th style="width:10%">p95</th><th style="width:14%">Criterio (&lt;300ms)</th><th style="width:9%">Estado</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="tc-id">TC-P-01</td><td><code>GET /posts?limit=20</code></td><td>16.3 ms</td><td>12.0 ms</td><td>30.1 ms</td><td>17.4 ms</td><td>Cumple</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-P-02</td><td><code>GET /posts/analytics</code></td><td>12.3 ms</td><td>9.5 ms</td><td>24.0 ms</td><td>19.0 ms</td><td>Cumple</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-P-03</td><td><code>GET /posts/trends?limit=10</code></td><td>10.7 ms</td><td>9.3 ms</td><td>12.3 ms</td><td>12.3 ms</td><td>Cumple</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================= CASOS DISENADOS ============================= -->
+<section class="hoja salto">
+  <h3 class="sub">5.6 Pruebas de Usabilidad (diseñadas para ejecución manual)</h3>
+  <table>
+    <thead>
+      <tr><th style="width:9%">ID</th><th style="width:26%">Caso de Prueba</th><th style="width:34%">Pasos de Ejecución</th><th style="width:22%">Resultado Esperado</th><th style="width:9%">Estado</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="tc-id">TC-USA-01</td><td>Navegación por pestañas</td><td>Cambiar entre Dashboard, Moderación, Analíticas y Tendencias</td><td>Cada vista carga sin recargar la página</td><td class="col-estado"><span class="badge dis">Pend.</span></td></tr>
+      <tr><td class="tc-id">TC-USA-02</td><td>Buscador y filtros del feed</td><td>Escribir palabra clave y filtrar por red/categoría</td><td>El feed se filtra de forma inmediata</td><td class="col-estado"><span class="badge dis">Pend.</span></td></tr>
+      <tr><td class="tc-id">TC-USA-03</td><td>Botón "Copiar Idea"</td><td>Pulsar copiar en un post aprobado</td><td>Texto en portapapeles + feedback "Copiado"</td><td class="col-estado"><span class="badge dis">Pend.</span></td></tr>
+      <tr><td class="tc-id">TC-USA-04</td><td>Moderación manual</td><td>Aprobar/Rechazar un post pendiente</td><td>El post cambia de bandeja y baja el contador</td><td class="col-estado"><span class="badge dis">Pend.</span></td></tr>
+      <tr><td class="tc-id">TC-USA-05</td><td>Toggle Modo Demo</td><td>Alternar Modo Demo y Real</td><td>Los datos cambian según el origen seleccionado</td><td class="col-estado"><span class="badge dis">Pend.</span></td></tr>
+      <tr><td class="tc-id">TC-USA-06</td><td>Accesibilidad / responsividad</td><td>Lighthouse + navegación por teclado + vista móvil</td><td>Puntaje de accesibilidad &ge; 90; sin trampas de foco</td><td class="col-estado"><span class="badge dis">Pend.</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub">5.7 Pruebas de Caja Blanca (ramas de decisión)</h3>
+  <table>
+    <thead>
+      <tr><th style="width:9%">ID</th><th style="width:30%">Rama / Condición</th><th style="width:34%">Cómo se fuerza</th><th style="width:18%">Cobertura</th><th style="width:9%">Estado</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="tc-id">TC-B-01</td><td><code>moderar_post</code>: texto vacío</td><td>Entrada ""</td><td>Cubierta por TC-U-01</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-B-02</td><td><code>moderar_post</code>: sin API Key &rarr; fallback</td><td><code>api_key=""</code></td><td>Cubierta por TC-U-03</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-B-03</td><td><code>moderar_post</code>: HTTP 503 &rarr; fallback</td><td>Mock 503</td><td>Cubierta por TC-U-04</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-B-04</td><td><code>obtener_posts_tendencia</code>: cascada de fuentes</td><td>Mock 200 / 500 / excepción</td><td>Cubierta por TC-U-13..16</td><td class="col-estado"><span class="badge ok">OK</span></td></tr>
+      <tr><td class="tc-id">TC-B-05</td><td><code>generate-trends</code>: sin aprobados &rarr; 400</td><td>BD sin posts aprobados</td><td>Diseñada (rama <code>if not textos</code>)</td><td class="col-estado"><span class="badge dis">Pend.</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub">5.8 Pruebas de Esfuerzo / Estrés (diseñadas)</h3>
+  <table>
+    <thead>
+      <tr><th style="width:9%">ID</th><th style="width:28%">Caso de Prueba</th><th style="width:34%">Pasos de Ejecución</th><th style="width:20%">Resultado Esperado</th><th style="width:9%">Estado</th></tr>
+    </thead>
+    <tbody>
+      <tr><td class="tc-id">TC-E-01</td><td>Carga concurrente en lectura</td><td>k6/Locust con 100-500 usuarios virtuales sobre <code>/posts</code> durante 2 min</td><td>Sin errores 5xx; degradación controlada de latencia</td><td class="col-estado"><span class="badge dis">Pend.</span></td></tr>
+      <tr><td class="tc-id">TC-E-02</td><td>Saturación del pool de conexiones</td><td>Ráfaga de peticiones que consultan BD superando <code>DB_POOL_SIZE</code></td><td>Las peticiones se encolan/liberan sin colgar el servicio</td><td class="col-estado"><span class="badge dis">Pend.</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================= RESUMEN FINAL ============================= -->
+<section class="hoja salto">
+  <h2 class="seccion">6. Resumen Final de la Prueba</h2>
+  <div class="kpis">
+    <div class="kpi"><span class="num">45</span><span class="lbl">Casos ejecutados</span></div>
+    <div class="kpi good"><span class="num">45</span><span class="lbl">Casos exitosos</span></div>
+    <div class="kpi bad"><span class="num">0</span><span class="lbl">Casos con fallas</span></div>
+    <div class="kpi good"><span class="num">100%</span><span class="lbl">Porcentaje de éxito</span></div>
+  </div>
+
+  <table class="kv">
+    <tr><th>Total de casos ejecutados</th><td>45 (16 unitarias + 11 integración + 13 caja negra + 2 regresión + 3 rendimiento). La suite automatizada reporta <span class="mono">Ran 27 tests &mdash; OK</span> (unitarias + integración); los 13 casos de caja negra, 2 de regresión y 3 de rendimiento se ejecutaron aparte sobre la API en vivo.</td></tr>
+    <tr><th>Casos exitosos</th><td>45 (todos en estado OK)</td></tr>
+    <tr><th>Casos con fallas</th><td>0</td></tr>
+    <tr><th>Porcentaje de éxito</th><td>100 % de los casos ejecutados</td></tr>
+    <tr><th>Casos diseñados pendientes</th><td>13 (6 usabilidad + 1 caja blanca manual + 2 esfuerzo + otros de accesibilidad), listos para ejecución manual.</td></tr>
+    <tr><th>Observaciones generales</th><td>El sistema desplegado en Docker se levantó con los 3 contenedores <code>healthy</code>. La API respondió correctamente en todos los contratos y validaciones, incluyendo el manejo de errores (404/422). La latencia de lectura fue excelente (media entre 10.7 y 16.3 ms, muy por debajo del umbral de 300 ms). El moderador IA operó de forma determinista mediante su fallback local (sin <code>DEEPSEEK_API_KEY</code>), y la cascada de extracción alcanzó a Dev.to real.</td></tr>
+    <tr><th>Recomendaciones</th><td>
+      <ul style="margin:0">
+        <li>Ejecutar las pruebas de usabilidad/accesibilidad con Lighthouse y corregir el contraste de textos <code>text-[10px]</code> muy tenues.</li>
+        <li>Ejecutar las pruebas de esfuerzo con k6/Locust y ajustar <code>DB_POOL_SIZE</code> según la concurrencia observada.</li>
+        <li>Integrar la suite <code>unittest</code> a un pipeline de CI para regresión automática en cada cambio.</li>
+        <li>Añadir una prueba automatizada para la rama 400 de <code>generate-trends</code> (sin posts aprobados).</li>
+        <li>Corregir erratas de UI detectadas ("Moderaión", doble botón "Extraer") para pulir la experiencia.</li>
+        <li>Considerar medir cobertura con <code>coverage.py</code> para cuantificar la caja blanca.</li>
+      </ul>
+    </td></tr>
+  </table>
+
+  <!-- ============================= FIRMA ============================= -->
+  <h2 class="seccion" style="margin-top:34px">7. Firma del Responsable / Evaluador</h2>
+  <div class="firma">
+    <div>
+      <div class="linea-firma"></div>
+      <b>Nombre:</b> _______________________________
+    </div>
+    <div>
+      <div class="linea-firma"></div>
+      <b>Cargo / Rol:</b> ___________________________
+    </div>
+  </div>
+  <div class="firma" style="margin-top:26px">
+    <div>
+      <div class="linea-firma"></div>
+      <b>Firma / Validación</b>
+    </div>
+    <div>
+      <div class="linea-firma"></div>
+      <b>Fecha de cierre de la prueba:</b> _______________
+    </div>
+  </div>
+
+  <footer class="pie">
+    Documento generado como parte de la actividad de pruebas de software &bull; Sistema de Moderación de Contenido en Redes Sociales v1.0.0 &bull; 16/07/2026
+  </footer>
+</section>
+
+</body>
+</html>

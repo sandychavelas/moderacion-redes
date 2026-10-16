@@ -1,0 +1,74 @@
+name: moderacion-redes
+
+services:
+  db:
+    image: mariadb:11.4
+    container_name: moderacion-db
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_NAME:-moderacionbd}
+      MARIADB_USER: ${DB_USER}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_HOST_PORT:-3306}:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      # Inicializa el esquema y datos de prueba en el primer arranque.
+      - ./api/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  api:
+    build:
+      context: ./api
+    container_name: moderacion-api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ENV: ${ENV:-production}
+      DOCS_ENABLED: ${DOCS_ENABLED:-false}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+      COOKIES_SECURE: ${COOKIES_SECURE:-false}
+      COOKIES_SAMESITE: ${COOKIES_SAMESITE:-lax}
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-moderacionbd}
+      DB_POOL_SIZE: ${DB_POOL_SIZE:-5}
+      DB_CONNECTION_TIMEOUT: ${DB_CONNECTION_TIMEOUT:-10}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      DEEPSEEK_API_BASE: ${DEEPSEEK_API_BASE:-https://api.deepseek.com/v1}
+    ports:
+      - "${API_HOST_PORT:-8000}:8000"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import socket,sys; s=socket.socket(); s.settimeout(2); s.connect(('127.0.0.1',8000)); s.close()"
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: moderacion-frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${FRONTEND_HOST_PORT:-8080}:80"
+
+volumes:
+  mariadb_data:
+    driver: local

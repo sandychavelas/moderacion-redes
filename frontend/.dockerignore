@@ -1,0 +1,17 @@
+# Dependencias y artefactos de build
+node_modules/
+dist/
+dist-ssr/
+
+# Entorno local y logs
+.env
+.env.*
+!.env.example
+*.local
+*.log
+
+# Control de versiones y OS
+.git/
+.gitignore
+.DS_Store
+Thumbs.db
